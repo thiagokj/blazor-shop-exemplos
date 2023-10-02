@@ -1,0 +1,29 @@
+﻿Skip: @Skip
+<br />
+Take: @Take
+
+<ul>
+  @foreach (var item in _products)
+  {
+    <li>@item.Title</li>
+  }
+</ul>
+
+@code {
+  [Parameter]
+  public int Skip { get; set; } = 0;
+
+  [Parameter]
+  public int Take { get; set; } = 10;
+
+  private List<Product> _products = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    await Task.Delay(500);
+    for (int i = 0; i < 50; i++)
+    {
+      //_products.Add(new Product(i + 1, $"Produto {i}", i * 13.75M, 1));
+    }
+  }
+}

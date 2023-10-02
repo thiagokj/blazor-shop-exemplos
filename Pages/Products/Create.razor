@@ -1,0 +1,62 @@
+﻿@page "/products/create"
+
+
+@inject AppDbContext _context
+
+<h1>New Product</h1>
+
+<EditForm Model ="_model" OnValidSubmit="@HandleSubmitAsync">
+
+    <div class="mb-3">
+        <label for="Title" class="form-label">Title</label>
+
+        <InputText
+            class="form-control"
+            type="text"
+            id="Title"
+            @bind-Value="_model.Title"/>
+    </div> 
+
+    <div class="mb-3">
+        <label for="Price" class="form-label">Price</label>
+
+        <InputNumber
+            class="form-control"
+            type="number"
+            id="Price"
+            @bind-Value="_model.Price"/>
+    </div>
+
+    <div class="mb-3">
+        <label for="CategoryId" class="form-label">CategoryId</label>
+
+        <InputSelect
+            id="CategoryId"
+            @bind-Value="_model.CategoryId"
+            class="form-control">
+
+            @foreach (var category in _categories)
+            {
+                <option value="@category.Id">
+                    @category.Title
+                </option>
+            }
+        </InputSelect>
+    </div>
+
+</EditForm>
+
+@code{
+  Product _model = new();
+  List<Category> _categories = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    _categories = await _context
+        .Categories
+        .AsNoTracking()
+        .ToListAsync();
+  }
+
+  async Task HandleSubmitAsync(){}
+}
