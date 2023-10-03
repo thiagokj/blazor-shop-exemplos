@@ -367,7 +367,130 @@ Obs: Adicione ao _Imports a importação do @using BlazingShop.Data.
   }
 ```
 
+## Validando Formulários
 
+Adicione as tags no inicio do form. Elas iram recuperar as definições da Model.
+
+```csharp
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+```
+Para criar uma mensagem de erro personalizada, siga os passos abaixo.
+
+```csharp
+// Crie uma variavel para referencia
+@code 
+{
+...
+  string? _errorMessage = null;
+...
+}
+
+// Teste a condição antes do botão Save
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+<div class="alert alert-danger" role="alert">
+    @_errorMessage
+</div>
+}
+
+// Exibe na tela ao enviar o formulario, usando o metodo HandleSubmit
+async Task HandleSubmitAsync()
+{
+_errorMessage = "Falha ao persistir os dados";
+}
+```
+
+## Salvando o produto
+
+Para indicar qual é a 1ª categoria selecionada, adicione o CategoryId na posição 0.
+
+```csharp
+protected override async Task OnInitializedAsync()
+{
+_categories = await _context
+    .Categories
+    .AsNoTracking()
+    .ToListAsync();
+
+_model.CategoryId = _categories[0].Id;
+}
+```
+
+Agora, vamos adicionar ao método de envio do form o codigo para persistir o produto.
+
+```csharp
+// Obs: Faça a injeção das dependencias para o banco de dados e navegação de paginas com as tags
+// @inject AppDbContext _context e @inject NavigationManager _navigationManager
+
+async Task HandleSubmitAsync()
+{
+    try
+    {
+        await _context.Products.AddAsync(_model);
+        await _context.SaveChangesAsync();
+
+        // Após salvar, retorna para pagina selecionada abaixo
+        _navigationManager.NavigateTo("/products");
+    }
+    catch (Exception ex)
+    {
+        _errorMessage = ex.Message;
+    }
+}
+```
+
+## Listando os produtos
+
+Crie uma pagina Index.razor dentro da pasta Products.
+
+```csharp
+@page "/products" // rota da pagina
+@inject AppDbContext _context // Injeta o contexto para comunicação com o banco
+
+<h1>Products</h1>
+
+// Botão para criar um novo produto, redirecionando para o form create
+<a href="products/create" class="btn btn-primary">
+  <i class="oi oi-plus"></i> CREATE
+</a>
+
+<table class="table">
+  <thead>
+    <tr>
+      <td>#</td>
+      <td>Title</td>
+      <td>Price</td>
+      <td></td>
+    </tr>
+  </thead>
+  <tbody>
+    // Exibe os itens do banco na tabela
+    @foreach (var product in _products)
+    {
+      <tr>
+        <td>@product.Id</td>
+        <td>@product.Title</td>
+        <td>@product.Price</td>
+        <td></td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+@code {
+  // Cria lista de produtos ao inicializar a pagina.
+  List<Product> _products = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    _products = await _context
+        .Products
+        .AsNoTracking()
+        .ToListAsync();
+  }
+}
+```
 
 
 
