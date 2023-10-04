@@ -16,9 +16,13 @@ Ou utilizando o Visual Studio, escolha a opção aplicativo Blazor Server
 ## Estrutura do App
 
 wwwroot   | Arquivos estáticos
+
 Pages     | Paginas Razor
+
 Shared    | Layouts
+
 _Imports  | Importação global de componentes
+
 App.razor | Rotas
 
 ## Diretivas
@@ -46,8 +50,11 @@ Qual pagina ou componente será renderizado. O arquivo principal é o App.razor
 Quando executamos a aplicação Blazor, seguimos a seguinte ordem:
 
 1 - Program chama o **app.MapFallbackToPage("/_Host")**.
+
 2 - O **_Host** carrega a rota raiz "**/**" e renderiza o html.
+
 3 - O **<component type="typeof(HeadOutlet)".../>** renderiza o titulo da pagina Index.razor
+
 4 - Agora o **<component type="typeof(App)".../>** renderiza o App.razor
 
 ## SPA em ação
