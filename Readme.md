@@ -492,7 +492,200 @@ Crie uma pagina Index.razor dentro da pasta Products.
 }
 ```
 
+## Editando um produto
 
+Crie uma pagina Edit.razor. Ela é muito semelhante ao Create.razor.
+
+```csharp
+// Passamos o ID do produto na rota
+@page "/products/edit/{id:int}"
+@inject AppDbContext Context;
+@inject NavigationManager NavManager
+
+// Titulo do cabeçalho com base no titulo do produto
+// Obs: a model está como nullable, pois nem sempre o produto pode ser encontrado
+<h1>@model?.Title</h1>
+
+// Tag do Blazor EditForm, que faz o bind (vinculo) com as Models
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+  <DataAnnotationsValidator />
+  <ValidationSummary />
+
+  <div class="mb-3">
+    <label for="Title" class="form-label">Title</label>
+    <InputText class="form-control" type="text" id="Title" @bind-Value="model.Title" />
+  </div>
+
+  <div class="mb-3">
+    <label for="Price" class="form-label">Price</label>
+    <InputNumber class="form-control" type="number" id="Price" @bind-Value="model.Price" />
+  </div>
+
+  <div class="mb-3">
+    <label for="CategoryId" class="form-label">Category</label>
+    <InputSelect id="categoryId" @bind-Value="model.CategoryId" class="form-control">
+      @foreach (var category in categories)
+      {
+        <option value="@category.Id">@category.Title</option>
+      }
+    </InputSelect>
+  </div>
+
+  @if (!string.IsNullOrEmpty(errorMessage))
+  {
+    <div class="alert alert-danger" role="alert">
+      @errorMessage
+    </div>
+  }
+
+  <button class="btn btn-success" type="submit">SAVE</button>
+</EditForm>
+
+@code {
+
+  // Parametro recebido na URL  
+  [Parameter]
+  public int Id { get; set; }
+
+  private Product? model = new();
+  private List<Category> categories = new();
+  private string? errorMessage = null;
+
+  protected override async Task OnInitializedAsync()
+  {
+    categories = await Context
+        .Categories
+        .AsNoTracking()
+        .OrderBy(x => x.Title)
+        .ToListAsync();
+
+    model = await Context
+        .Products
+        .AsNoTracking()
+        .FirstOrDefaultAsync(x => x.Id == Id);
+  }
+
+  private async Task HandleSubmit()
+  {
+    try
+    {
+      var prod = await Context.Products.FirstOrDefaultAsync(x => x.Id == Id);
+      if (prod is null)
+        throw new Exception("Produto não encontrado");
+
+      prod.Title = model.Title;
+      prod.Price = model.Price;
+      prod.CategoryId = model.CategoryId;
+
+      // Atualiza os dados no Banco
+      Context.Products.Update(prod);
+      await Context.SaveChangesAsync();
+
+      NavManager.NavigateTo("/products");
+    }
+    catch (Exception ex)
+    {
+      errorMessage = ex.Message;
+    }
+  }
+
+}
+```
+
+## Excluindo um produto
+
+Abordagem muito similar a edição.
+
+```csharp
+// Rota para excluir o produto, passando o ID
+@page "/products/delete/{id:int}"
+@inject AppDbContext Context;
+@inject NavigationManager NavManager
+
+// O Cabeçalho fica como uma pergunta aguardando confirmação. Ex: Apagar Produto?
+<h1>Delete @model?.Title?</h1>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+  <div class="alert alert-danger" role="alert">
+    @errorMessage
+  </div>
+}
+
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+  <div class="mb-3">
+    <label for="Title" class="form-label">Title</label>
+    <InputText readonly class="form-control" type="text" id="Title" @bind-Value="model.Title" />
+  </div>
+
+  <div class="mb-3">
+    <label for="Price" class="form-label">Price</label>
+    <InputNumber readonly class="form-control" type="number" id="Price" @bind-Value="model.Price" />
+  </div>
+  <button class="btn btn-danger" type="submit">DELETE</button>
+</EditForm>
+
+@code {
+  // Parametro recebido na URL
+  [Parameter]
+  public int Id { get; set; }
+
+  private Product? model = new();
+  private string? errorMessage = null;
+
+  protected override async Task OnInitializedAsync()
+  {
+    model = await Context
+        .Products
+        .AsNoTracking()
+        .FirstOrDefaultAsync(x => x.Id == Id);
+  }
+
+  private async Task HandleSubmit()
+  {
+    try
+    {
+      var prod = await Context
+        .Products
+        .FirstOrDefaultAsync(x => x.Id == Id);
+
+      if (prod is null)
+        throw new Exception("Produto não encontrado");
+      
+      // Remove o produto no Banco
+      Context.Products.Remove(prod);
+      await Context.SaveChangesAsync();
+
+      NavManager.NavigateTo("/products");
+    }
+    catch (Exception ex)
+    {
+      errorMessage = ex.Message;
+    }
+  }
+}
+```
+
+Para facilitar a navegação pelas opções de Editar e apagar, altere a Index dos Produtos,
+adicionando os links com as rotas:
+
+```csharp
+...
+  <tbody>
+    @foreach (var product in _products)
+    {
+      <tr>
+        <td>@product.Id</td>
+        <td>@product.Title</td>
+        <td>@product.Price.ToString("C", new CultureInfo("pt-br"))</td>
+        <td>
+          <a href="/products/edit/@product.Id">EDIT</a>
+          <a href="/products/delete/@product.Id">DELETE</a>
+        </td>
+      </tr>
+    }
+  </tbody>
+```
 
 
 
